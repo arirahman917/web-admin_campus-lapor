@@ -69,12 +69,29 @@ class ReportApiController extends BaseApiController
         ]);
         $data['category'] = $category;
 
-        return response()->json(['report' => $reports->createFromMobile($data)], 201);
+        // Get campus_key from authenticated user (set by auth.api middleware)
+        $authUser = $request->auth_user ?? auth()->user();
+        $campusKey = $authUser
+            ? ($authUser->campus_key ?? $authUser->kode_kampus ?? null)
+            : null;
+
+        return response()->json(['report' => $reports->createFromMobile($data, $campusKey)], 201);
     }
 
     private function reportList(Request $request, CampusReportStore $reports, string $category)
     {
-        $items = collect($reports->forCampus($request->query('campus_key', $request->query('kode_kampus', ''))))
+        // Use authenticated user's campus_key instead of trusting query parameter
+        $authUser = $request->auth_user ?? auth()->user();
+        $campusKey = '';
+        if ($authUser) {
+            $campusKey = $authUser->campus_key ?? $authUser->kode_kampus ?? '';
+        }
+        // Allow query param override only if not empty (for backwards compatibility)
+        if (empty($campusKey)) {
+            $campusKey = $request->query('campus_key', $request->query('kode_kampus', ''));
+        }
+
+        $items = collect($reports->forCampus($campusKey))
             ->where('category', $category)
             ->values();
 

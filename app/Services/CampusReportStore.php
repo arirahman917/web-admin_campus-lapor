@@ -19,7 +19,7 @@ class CampusReportStore
         $this->users = $database->selectCollection('users');
     }
 
-    public function createFromMobile(array $data): array
+    public function createFromMobile(array $data, ?string $overrideCampusKey = null): array
     {
         $user = $this->users->findOne([
             '$or' => [
@@ -30,7 +30,10 @@ class CampusReportStore
             'role' => 'civitas',
         ]);
 
-        $campusKey = $user['campus_key'] ?? $user['kode_kampus'] ?? 'admin1';
+        $campusKey = $overrideCampusKey
+            ?? ($user['campus_key'] ?? null)
+            ?? ($user['kode_kampus'] ?? null)
+            ?? 'unknown';
         $report = [
             'campus_key' => $campusKey,
             'category' => $data['category'],
