@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Services\ChatStore;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,6 +22,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (config('app.env') === 'production') {
+            URL::forceScheme('https');
+        }
+
         View::composer('layouts.app', function ($view) {
             $adminUsername = session('auth_username', 'admin1');
             $campusKey = session('auth_kode_kampus')
